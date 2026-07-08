@@ -1,22 +1,39 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ token, onLogout }) {
   const [leads, setLeads] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('All');
+  const navigate = useNavigate();
 
-  // Fetch all leads on mount
+  // Redirect to login if token is missing
   useEffect(() => {
-    fetchLeads();
-  }, []);
+    if (!token) {
+      navigate('/login');
+    } else {
+      fetchLeads();
+    }
+  }, [token]);
 
   const fetchLeads = async () => {
     setIsLoading(true);
     setError('');
     try {
-      // AJAX (Fetch) GET leads
-      const response = await fetch('/api/leads');
+      // AJAX (Fetch) GET leads with Authorization headers
+      const response = await fetch('/api/leads', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 401) {
+        onLogout();
+        navigate('/login');
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
         setLeads(data.data);
@@ -33,14 +50,22 @@ export default function AdminDashboard() {
 
   const handleStatusChange = async (leadId, newStatus) => {
     try {
-      // AJAX (Fetch) PUT update status
+      // AJAX (Fetch) PUT update status with Authorization headers
       const response = await fetch(`/api/leads/${leadId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({ status: newStatus })
       });
+
+      if (response.status === 401) {
+        onLogout();
+        navigate('/login');
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
         // Update local state
@@ -57,10 +82,20 @@ export default function AdminDashboard() {
     if (!window.confirm('Are you sure you want to delete this lead?')) return;
     
     try {
-      // AJAX (Fetch) DELETE lead
+      // AJAX (Fetch) DELETE lead with Authorization headers
       const response = await fetch(`/api/leads/${leadId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
+
+      if (response.status === 401) {
+        onLogout();
+        navigate('/login');
+        return;
+      }
+
       const data = await response.json();
       if (data.success) {
         // Update local state
@@ -114,15 +149,23 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-extrabold text-slate-900 leading-tight">Admin Dashboard</h1>
             <p className="text-slate-500 text-sm mt-1">Manage and track customer inquiries and service requests from MongoDB.</p>
           </div>
-          <button 
-            onClick={fetchLeads} 
-            className="bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm transition flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H17" />
-            </svg>
-            Refresh
-          </button>
+          <div className="flex gap-3">
+            <button 
+              onClick={fetchLeads} 
+              className="bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm transition flex items-center gap-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H17" />
+              </svg>
+              Refresh
+            </button>
+            <button 
+              onClick={onLogout} 
+              className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold py-2 px-4 rounded-lg shadow-sm transition"
+            >
+              Logout
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}

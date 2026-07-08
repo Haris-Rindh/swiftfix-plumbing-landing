@@ -1,14 +1,21 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken');
 const connectDB = require('./config/db');
 const Lead = require('./models/Lead');
+const User = require('./models/User');
+const { protect } = require('./middleware/authMiddleware');
+const { sendLeadNotification } = require('./config/email');
 
 // Load environment variables
 dotenv.config();
 
 // Connect to Database
-connectDB();
+connectDB().then(() => {
+  // Seed Default Admin User
+  seedAdminUser();
+});
 
 const app = express();
 
@@ -16,10 +23,80 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-// @desc    Get all leads
+// Seed Admin Logic
+const seedAdminUser = async () => {
+  try {
+    const adminCount = await User.countDocuments();
+    if (adminCount === 0) {
+      console.log('[Seeding] Seeding admin database with default credentials...');
+      const defaultEmail = 'admin@swiftfix.com';
+      const defaultPassword = 'admin12345';
+      
+      await User.create({
+        email: defaultEmail,
+        password: defaultPassword
+      });
+      
+      console.log(`[Seeding] Seeding COMPLETE!\n  Default Admin Account: ${defaultEmail}\n  Default Password: ${defaultPassword}\n  (Please modify these in production)`);
+    } else {
+      console.log('[Seeding] Admin user records exist. Skipping default seeding.');
+    }
+  } catch (error) {
+    console.error('[Seeding] Error seeding admin credentials: ', error.message);
+  }
+};
+
+// --- AUTH ROUTES ---
+
+// @desc    Auth user & get token
+// @route   POST /api/auth/login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: 'Please provide email and password' });
+    }
+
+    // Find user by email and select password field (since it is hidden by default)
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    }
+
+    // Verify password
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, error: 'Invalid email or password' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || 'fallback_jwt_secret',
+      { expiresIn: '30d' }
+    );
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Server Error: ' + error.message });
+  }
+});
+
+
+// --- LEADS ROUTES ---
+
+// @desc    Get all leads (PROTECTED)
 // @route   GET /api/leads
-app.get('/api/leads', async (req, res) => {
+app.get('/api/leads', protect, async (req, res) => {
   try {
     const leads = await Lead.find().sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: leads.length, data: leads });
@@ -28,7 +105,7 @@ app.get('/api/leads', async (req, res) => {
   }
 });
 
-// @desc    Create a new lead
+// @desc    Create a new lead (PUBLIC)
 // @route   POST /api/leads
 app.post('/api/leads', async (req, res) => {
   try {
@@ -39,15 +116,19 @@ app.post('/api/leads', async (req, res) => {
     }
 
     const lead = await Lead.create({ name, phone, issue });
+    
+    // Asynchronously send email notification to the business owner
+    sendLeadNotification(lead);
+
     res.status(201).json({ success: true, data: lead });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Server Error: ' + error.message });
   }
 });
 
-// @desc    Update a lead status
+// @desc    Update a lead status (PROTECTED)
 // @route   PUT /api/leads/:id
-app.put('/api/leads/:id', async (req, res) => {
+app.put('/api/leads/:id', protect, async (req, res) => {
   try {
     const { status } = req.body;
 
@@ -76,9 +157,9 @@ app.put('/api/leads/:id', async (req, res) => {
   }
 });
 
-// @desc    Delete a lead
+// @desc    Delete a lead (PROTECTED)
 // @route   DELETE /api/leads/:id
-app.delete('/api/leads/:id', async (req, res) => {
+app.delete('/api/leads/:id', protect, async (req, res) => {
   try {
     const lead = await Lead.findByIdAndDelete(req.params.id);
 

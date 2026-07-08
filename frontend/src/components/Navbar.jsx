@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
-export default function Navbar({ showAdmin, setShowAdmin, activeSection }) {
+export default function Navbar({ token, onLogout, activeSection }) {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -9,35 +12,52 @@ export default function Navbar({ showAdmin, setShowAdmin, activeSection }) {
 
   const handleLinkClick = (e, targetId) => {
     e.preventDefault();
-    setShowAdmin(false);
     setIsOpen(false);
-    
-    // Smooth scroll to element
-    const element = document.getElementById(targetId);
-    if (element) {
-      const headerOffset = 80;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-      
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
+
+    if (location.pathname !== '/') {
+      // If we are not on the homepage, navigate to '/' first and then scroll
+      navigate('/', { replace: true });
+      setTimeout(() => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      // If we are already on the homepage, scroll smoothly
+      const element = document.getElementById(targetId);
+      if (element) {
+        const headerOffset = 80;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
     }
   };
+
+  const handleAdminClick = () => {
+    setIsOpen(false);
+    if (token) {
+      navigate('/admin');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  const isHome = location.pathname === '/';
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-md border-b border-slate-100 transition-all duration-300" id="navbar">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <a 
-            href="#" 
-            onClick={(e) => {
-              e.preventDefault();
-              setShowAdmin(false);
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
+          <Link 
+            to="/" 
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="flex-shrink-0 flex items-center gap-2 cursor-pointer group"
           >
             <div className="relative">
@@ -46,44 +66,62 @@ export default function Navbar({ showAdmin, setShowAdmin, activeSection }) {
               </svg>
             </div>
             <span className="font-bold text-2xl tracking-tight text-slate-900">SwiftFix</span>
-          </a>
+          </Link>
 
           {/* Desktop Menu */}
           <nav className="hidden md:flex space-x-8 items-center">
             <a 
               href="#services" 
               onClick={(e) => handleLinkClick(e, 'services')} 
-              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${activeSection === 'services' && !showAdmin ? 'active' : ''}`}
+              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${isHome && activeSection === 'services' ? 'active' : ''}`}
             >
               Services
             </a>
             <a 
               href="#process" 
               onClick={(e) => handleLinkClick(e, 'process')} 
-              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${activeSection === 'process' && !showAdmin ? 'active' : ''}`}
+              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${isHome && activeSection === 'process' ? 'active' : ''}`}
             >
               How It Works
             </a>
             <a 
               href="#reviews" 
               onClick={(e) => handleLinkClick(e, 'reviews')} 
-              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${activeSection === 'reviews' && !showAdmin ? 'active' : ''}`}
+              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${isHome && activeSection === 'reviews' ? 'active' : ''}`}
             >
               Reviews
             </a>
             <a 
               href="#faq" 
               onClick={(e) => handleLinkClick(e, 'faq')} 
-              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${activeSection === 'faq' && !showAdmin ? 'active' : ''}`}
+              className={`nav-link text-sm font-semibold text-slate-600 hover:text-swift-blue transition uppercase tracking-wide py-1 ${isHome && activeSection === 'faq' ? 'active' : ''}`}
             >
               FAQ
             </a>
-            <button 
-              onClick={() => setShowAdmin(!showAdmin)} 
-              className={`text-sm font-semibold transition uppercase tracking-wide py-1 px-3 rounded ${showAdmin ? 'bg-swift-blue text-white' : 'text-slate-600 hover:text-swift-blue'}`}
-            >
-              Admin {showAdmin ? 'Dashboard' : 'View'}
-            </button>
+            
+            {token ? (
+              <div className="flex items-center gap-4">
+                <Link 
+                  to="/admin" 
+                  className={`text-sm font-semibold transition uppercase tracking-wide py-1 px-3 rounded ${location.pathname === '/admin' ? 'bg-swift-blue/10 text-swift-blue' : 'text-slate-600 hover:text-swift-blue'}`}
+                >
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={onLogout} 
+                  className="text-sm font-semibold text-rose-600 hover:text-rose-800 uppercase tracking-wide py-1 transition"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleAdminClick}
+                className={`text-sm font-semibold transition uppercase tracking-wide py-1 px-3 rounded ${location.pathname === '/login' ? 'bg-swift-blue/10 text-swift-blue' : 'text-slate-600 hover:text-swift-blue'}`}
+              >
+                Admin Login
+              </button>
+            )}
           </nav>
 
           {/* CTA Button */}
@@ -151,15 +189,31 @@ export default function Navbar({ showAdmin, setShowAdmin, activeSection }) {
             >
               FAQ
             </a>
-            <button 
-              onClick={() => {
-                setShowAdmin(!showAdmin);
-                setIsOpen(false);
-              }} 
-              className="w-full text-left block px-4 py-3 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-swift-blue transition"
-            >
-              Admin View ({showAdmin ? 'ON' : 'OFF'})
-            </button>
+            
+            {token ? (
+              <>
+                <Link 
+                  to="/admin" 
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-3 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-swift-blue transition"
+                >
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={() => { setIsOpen(false); onLogout(); }} 
+                  className="w-full text-left block px-4 py-3 rounded-lg text-base font-semibold text-rose-600 hover:bg-rose-50 transition"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <button 
+                onClick={handleAdminClick} 
+                className="w-full text-left block px-4 py-3 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 hover:text-swift-blue transition"
+              >
+                Admin Login
+              </button>
+            )}
             <a href="tel:5550123" className="block mt-6 mx-2 px-4 py-4 rounded-xl text-lg font-bold text-center text-white bg-red-600 shadow-lg active:bg-red-700">
               Call Emergency: 555-0123
             </a>

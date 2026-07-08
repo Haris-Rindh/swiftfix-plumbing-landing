@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-export default function Footer({ showAdmin, setShowAdmin }) {
+export default function Footer() {
   return (
     <footer className="bg-slate-950 text-slate-400 py-16 border-t border-slate-800 text-sm text-left">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -19,7 +20,7 @@ export default function Footer({ showAdmin, setShowAdmin }) {
           <div>
             <h5 className="text-white font-bold mb-4 uppercase tracking-wider text-xs">Quick Links</h5>
             <ul className="space-y-3">
-              <li><a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition">Home</a></li>
+              <li><Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="hover:text-white transition">Home</Link></li>
               <li><a href="#services" className="hover:text-swift-blue transition">Services</a></li>
               <li><a href="#process" className="hover:text-swift-blue transition">Process</a></li>
               <li><a href="#reviews" className="hover:text-swift-blue transition">Reviews</a></li>
@@ -61,7 +62,7 @@ export default function Footer({ showAdmin, setShowAdmin }) {
         </div>
         
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center text-xs">
-          <p>&copy; 2026 SwiftFix Plumbing. All rights reserved. | <button onClick={() => setShowAdmin(!showAdmin)} className="underline hover:text-white">Toggle Admin Dashboard</button></p>
+          <p>&copy; 2026 SwiftFix Plumbing. All rights reserved. | <Link to="/admin" className="underline hover:text-white">Admin Dashboard</Link></p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a href="#" className="text-slate-400 hover:text-white transition">
               <span className="sr-only">Facebook</span>
