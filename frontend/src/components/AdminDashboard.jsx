@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AnalyticsCharts from './AnalyticsCharts';
 
 export default function AdminDashboard({ token, onLogout }) {
   const [leads, setLeads] = useState([]);
@@ -134,7 +135,7 @@ export default function AdminDashboard({ token, onLogout }) {
       case 'clog': return 'Blocked Drain';
       case 'leak': return 'Leak Repair';
       case 'heater': return 'Water Heater';
-      case 'install': return 'Installation Quote';
+      case 'install': return 'Installation';
       default: return issue;
     }
   };
@@ -152,7 +153,7 @@ export default function AdminDashboard({ token, onLogout }) {
           <div className="flex gap-3">
             <button 
               onClick={fetchLeads} 
-              className="bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm transition flex items-center gap-2"
+              className="bg-white hover:bg-slate-50 text-slate-700 font-semibold py-2 px-4 border border-slate-300 rounded-lg shadow-sm transition flex items-center gap-2 cursor-pointer"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 7.89H17" />
@@ -161,7 +162,7 @@ export default function AdminDashboard({ token, onLogout }) {
             </button>
             <button 
               onClick={onLogout} 
-              className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold py-2 px-4 rounded-lg shadow-sm transition"
+              className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold py-2 px-4 rounded-lg shadow-sm transition cursor-pointer"
             >
               Logout
             </button>
@@ -207,13 +208,16 @@ export default function AdminDashboard({ token, onLogout }) {
           </div>
         </div>
 
+        {/* Analytics Charts */}
+        {!isLoading && <AnalyticsCharts leads={leads} />}
+
         {/* Filter Controls */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
           {['All', 'Pending', 'In Contact', 'Scheduled', 'Resolved', 'Cancelled'].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-bold border transition ${filter === status ? 'bg-swift-blue text-white border-swift-blue' : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow-sm'}`}
+              className={`px-4 py-2 rounded-lg text-sm font-bold border transition cursor-pointer ${filter === status ? 'bg-swift-blue text-white border-swift-blue' : 'bg-white hover:bg-slate-50 text-slate-600 border-slate-200 shadow-sm'}`}
             >
               {status}
             </button>
@@ -259,30 +263,48 @@ export default function AdminDashboard({ token, onLogout }) {
                   <tr>
                     <th scope="col" className="px-6 py-4">Customer Name</th>
                     <th scope="col" className="px-6 py-4">Phone Number</th>
-                    <th scope="col" className="px-6 py-4">Requested Issue</th>
-                    <th scope="col" className="px-6 py-4">Submitted Date</th>
-                    <th scope="col" className="px-6 py-4">Lead Status</th>
+                    <th scope="col" className="px-6 py-4">Category</th>
+                    <th scope="col" className="px-6 py-4">Upfront Quote</th>
+                    <th scope="col" className="px-6 py-4">Details & Selections</th>
+                    <th scope="col" className="px-6 py-4">Status</th>
                     <th scope="col" className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredLeads.map((lead) => (
                     <tr key={lead._id} className="hover:bg-slate-50 transition duration-150">
+                      {/* Name */}
                       <td className="px-6 py-4 font-bold text-slate-900">{lead.name}</td>
+                      
+                      {/* Phone */}
                       <td className="px-6 py-4 font-semibold text-slate-700">
                         <a href={`tel:${lead.phone}`} className="hover:text-swift-blue underline decoration-dotted">
                           {lead.phone}
                         </a>
                       </td>
-                      <td className="px-6 py-4 font-medium text-slate-600">
+                      
+                      {/* Category */}
+                      <td className="px-6 py-4 font-bold text-slate-600">
                         {getIssueLabel(lead.issue)}
                       </td>
-                      <td className="px-6 py-4 text-slate-500">
-                        {new Date(lead.createdAt).toLocaleString(undefined, {
-                          dateStyle: 'medium',
-                          timeStyle: 'short'
-                        })}
+                      
+                      {/* Upfront Quote */}
+                      <td className="px-6 py-4 font-extrabold text-slate-800">
+                        {lead.estimateMax > 0 ? (
+                          <span className="text-swift-blue bg-swift-light/50 px-2.5 py-1 rounded-md text-xs font-black">
+                            ${lead.estimateMin} - ${lead.estimateMax}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-medium">-</span>
+                        )}
                       </td>
+                      
+                      {/* Details Questionnaire */}
+                      <td className="px-6 py-4 text-slate-500 font-medium text-xs max-w-xs truncate" title={lead.details || 'N/A'}>
+                        {lead.details || <span className="text-slate-300 italic">No questionnaire details</span>}
+                      </td>
+                      
+                      {/* Status Dropdown */}
                       <td className="px-6 py-4">
                         <select
                           value={lead.status}
@@ -296,10 +318,12 @@ export default function AdminDashboard({ token, onLogout }) {
                           <option value="Cancelled">Cancelled</option>
                         </select>
                       </td>
+                      
+                      {/* Actions */}
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleDeleteLead(lead._id)}
-                          className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 p-2 rounded-lg transition"
+                          className="text-rose-600 hover:text-rose-800 hover:bg-rose-50 p-2 rounded-lg transition cursor-pointer"
                           title="Delete Lead"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

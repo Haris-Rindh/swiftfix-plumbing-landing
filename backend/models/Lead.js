@@ -16,6 +16,18 @@ const LeadSchema = new mongoose.Schema({
     required: [true, 'Please select or describe the issue'],
     enum: ['emergency', 'clog', 'leak', 'heater', 'install']
   },
+  estimateMin: {
+    type: Number,
+    default: 0
+  },
+  estimateMax: {
+    type: Number,
+    default: 0
+  },
+  details: {
+    type: String,
+    default: ''
+  },
   status: {
     type: String,
     required: true,

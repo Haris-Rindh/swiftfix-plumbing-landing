@@ -109,13 +109,20 @@ app.get('/api/leads', protect, async (req, res) => {
 // @route   POST /api/leads
 app.post('/api/leads', async (req, res) => {
   try {
-    const { name, phone, issue } = req.body;
+    const { name, phone, issue, estimateMin, estimateMax, details } = req.body;
 
     if (!name || !phone || !issue) {
       return res.status(400).json({ success: false, error: 'Please provide name, phone and issue' });
     }
 
-    const lead = await Lead.create({ name, phone, issue });
+    const lead = await Lead.create({ 
+      name, 
+      phone, 
+      issue,
+      estimateMin: estimateMin || 0,
+      estimateMax: estimateMax || 0,
+      details: details || ''
+    });
     
     // Asynchronously send email notification to the business owner
     sendLeadNotification(lead);

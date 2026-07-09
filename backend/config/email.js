@@ -64,14 +64,29 @@ const sendLeadNotification = async (lead) => {
       install: 'Installation Quote'
     };
 
+    // Calculate estimate html row
+    const estimateHtml = lead.estimateMax > 0 
+      ? `<tr style="background-color: #e0f2fe;">
+          <td style="padding: 10px; font-weight: bold; color: #0369a1; border: 1px solid #bae6fd;">Upfront Quote:</td>
+          <td style="padding: 10px; color: #0369a1; font-weight: 800; font-size: 16px; border: 1px solid #bae6fd;">$${lead.estimateMin} - $${lead.estimateMax}</td>
+         </tr>`
+      : '';
+
+    const detailsHtml = lead.details 
+      ? `<tr>
+          <td style="padding: 10px; font-weight: bold; color: #374151; vertical-align: top;">Leads Details:</td>
+          <td style="padding: 10px; color: #4b5563; font-style: italic; line-height: 1.4;">${lead.details.replace(/\n/g, '<br />')}</td>
+         </tr>`
+      : '';
+
     const mailOptions = {
       from: `"SwiftFix Plumbing Alerts" <${sender}>`,
       to: recipient,
       subject: `New Lead Inquiry: ${lead.name} (${issueLabels[lead.issue] || lead.issue})`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fcfcfc;">
-          <h2 style="color: #0ea5e9; border-bottom: 2px solid #0ea5e9; padding-bottom: 10px;">New Service Inquiry</h2>
-          <p style="font-size: 15px; color: #4b5563;">A new client has requested a service estimate from SwiftFix Plumbing:</p>
+          <h2 style="color: #0ea5e9; border-bottom: 2px solid #0ea5e9; padding-bottom: 10px; margin-top: 0;">New Service Inquiry</h2>
+          <p style="font-size: 15px; color: #4b5563;">A new client has completed the Estimate Wizard from SwiftFix Plumbing:</p>
           
           <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
             <tr style="background-color: #f3f4f6;">
@@ -88,6 +103,8 @@ const sendLeadNotification = async (lead) => {
               <td style="padding: 10px; font-weight: bold; color: #374151;">Service Issue:</td>
               <td style="padding: 10px; color: #111827; font-weight: bold;">${issueLabels[lead.issue] || lead.issue}</td>
             </tr>
+            ${estimateHtml}
+            ${detailsHtml}
             <tr>
               <td style="padding: 10px; font-weight: bold; color: #374151;">Received Date:</td>
               <td style="padding: 10px; color: #555555;">${new Date(lead.createdAt).toLocaleString()}</td>
@@ -95,7 +112,7 @@ const sendLeadNotification = async (lead) => {
           </table>
 
           <div style="margin-top: 25px; text-align: center;">
-            <a href="http://localhost:5173/?admin=true" style="background-color: #0ea5e9; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+            <a href="http://localhost:5173/admin" style="background-color: #0ea5e9; color: white; padding: 12px 25px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
               View in Admin Dashboard
             </a>
           </div>
