@@ -7,6 +7,7 @@ export default function Login({ setToken }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || '';
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +16,7 @@ export default function Login({ setToken }) {
 
     try {
       // AJAX (Fetch) login request
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -98,9 +98,11 @@ export default function EstimateWizard({ onSuccess }) {
       details: `Selected Issue: ${pricingData[category].label} -> Option: ${optDetails.label}`
     };
 
+    const API_URL = import.meta.env.VITE_API_URL || '';
+
     try {
       // AJAX POST request
-      const response = await fetch('/api/leads', {
+      const response = await fetch(`${API_URL}/api/leads`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -8,6 +8,7 @@ export default function AdminDashboard({ token, onLogout }) {
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('All');
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL || '';
 
   // Redirect to login if token is missing
   useEffect(() => {
@@ -23,7 +24,7 @@ export default function AdminDashboard({ token, onLogout }) {
     setError('');
     try {
       // AJAX (Fetch) GET leads with Authorization headers
-      const response = await fetch('/api/leads', {
+      const response = await fetch(`${API_URL}/api/leads`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -52,7 +53,7 @@ export default function AdminDashboard({ token, onLogout }) {
   const handleStatusChange = async (leadId, newStatus) => {
     try {
       // AJAX (Fetch) PUT update status with Authorization headers
-      const response = await fetch(`/api/leads/${leadId}`, {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ export default function AdminDashboard({ token, onLogout }) {
     
     try {
       // AJAX (Fetch) DELETE lead with Authorization headers
-      const response = await fetch(`/api/leads/${leadId}`, {
+      const response = await fetch(`${API_URL}/api/leads/${leadId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
