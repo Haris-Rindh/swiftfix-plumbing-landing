@@ -19,6 +19,10 @@ const protect = async (req, res, next) => {
       // Fetch user from DB, attach to request (excluding password)
       req.user = await User.findById(decoded.id).select('-password');
 
+      if (!req.user) {
+        return res.status(401).json({ success: false, error: 'Not authorized, user account not found' });
+      }
+
       next();
     } catch (error) {
       console.error('JWT verification error:', error.message);

@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 
 let transporter;
 let isEthereal = false;
+let etherealUser = '';
 
 // Create transporter configuration
 const initTransporter = async () => {
@@ -25,6 +26,7 @@ const initTransporter = async () => {
     try {
       isEthereal = true;
       const testAccount = await nodemailer.createTestAccount();
+      etherealUser = testAccount.user;
       
       console.log(`[SMTP Config] Ethereal account generated! \n  User: ${testAccount.user}\n  Pass: ${testAccount.pass}`);
       
@@ -54,7 +56,7 @@ const sendLeadNotification = async (lead) => {
     }
 
     const recipient = process.env.NOTIFY_EMAIL || 'leads@swiftfix.com';
-    const sender = isEthereal ? activeTransporter.options.auth.user : (process.env.SMTP_FROM || 'no-reply@swiftfix.com');
+    const sender = isEthereal ? etherealUser : (process.env.SMTP_FROM || 'no-reply@swiftfix.com');
 
     const issueLabels = {
       emergency: '🚨 Emergency (Burst Pipe, etc)',
