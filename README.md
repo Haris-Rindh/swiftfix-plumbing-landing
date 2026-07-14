@@ -1,6 +1,6 @@
 # SwiftFix Plumbing - MERN Stack Lead Generation Application
 
-This is a fully responsive, high-performance plumbing services landing page migrated to the **MERN Stack** (MongoDB, Express, React, Node.js). It features a lead generation system that writes inquiries directly to MongoDB via an AJAX interface and provides a fully interactive admin dashboard to track and update lead statuses.
+SwiftFix Plumbing is a fully responsive plumbing services landing app built on the **MERN Stack** (MongoDB, Express, React, Node.js). Customers can use the interactive estimator to submit service inquiries, those leads are saved in MongoDB, and admins can log in to review, filter, update, and delete lead records from a dashboard.
 
 ## 🌟 Key Features
 
@@ -33,31 +33,89 @@ This is a fully responsive, high-performance plumbing services landing page migr
 
 ---
 
-## 🚀 How to Run
+## 🧩 Architecture at a Glance
+
+- **Frontend (`frontend/`)**: React + Vite UI for the marketing landing page, estimate wizard, login page, and admin dashboard.
+- **Backend (`backend/`)**: Express API for auth and lead CRUD endpoints.
+- **Database (MongoDB)**: Stores users and lead submissions.
+- **Runtime flow**: Frontend sends AJAX requests to backend endpoints (`/api/auth/*`, `/api/leads/*`), backend persists data in MongoDB, and protected routes require JWT auth.
+
+---
+
+## 🚀 Quick Start
 
 ### Prerequisites
-Make sure you have [Node.js](https://nodejs.org/) and a running [MongoDB](https://www.mongodb.com/) instance installed.
+Make sure you have:
+- [Node.js](https://nodejs.org/) (LTS recommended)
+- npm (ships with Node.js)
+- A running [MongoDB](https://www.mongodb.com/) instance (local or remote)
 
-### 1. Install Dependencies
-Run this command in the root folder to install dependencies for the root, backend, and frontend directories:
+### 1) Install dependencies
+From the repository root:
 ```bash
 npm run install-all
 ```
 
-### 2. Configure Environment Variables
-Create a `.env` file in the `backend/` directory (you can copy `backend/.env.example` as a template):
+### 2) Configure backend environment variables
+Copy the example env file, then edit values as needed:
+```bash
+cp backend/.env.example backend/.env
+```
+
+Minimum required values for local development:
 ```env
 PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/swiftfix
+JWT_SECRET=replace-with-a-long-random-secret
 ```
 
-### 3. Start Development Servers
-Run the dev server in the root folder to start both Express backend and Vite React frontend concurrently:
+### 3) (Optional) Configure frontend API base URL
+The frontend reads `VITE_API_URL` and defaults to same-origin (`''`) if unset.
+
+For local split frontend/backend dev, create `frontend/.env` with:
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+### 4) Start development servers
+Start both backend and frontend together from the root:
 ```bash
 npm run dev
 ```
-The React frontend will be accessible at: **[http://localhost:5173](http://localhost:5173)**
-The Express backend will be running on: **[http://localhost:5000](http://localhost:5000)**
+
+You can also run them separately:
+```bash
+npm run server   # backend only (nodemon)
+npm run client   # frontend only (Vite)
+```
+
+- React frontend: **[http://localhost:5173](http://localhost:5173)**
+- Express backend: **[http://localhost:5000](http://localhost:5000)**
+- Backend health check: **[http://localhost:5000/api/health](http://localhost:5000/api/health)**
+
+## 🔐 Environment Variables Reference
+
+### Backend (`backend/.env`)
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `PORT` | No (defaults to `5000`) | Express server port |
+| `MONGO_URI` | Yes | MongoDB connection string |
+| `JWT_SECRET` | Yes | JWT signing secret for admin auth |
+| `SMTP_HOST` | No | SMTP server host for lead notifications |
+| `SMTP_PORT` | No | SMTP server port (defaults to `587`) |
+| `SMTP_USER` | No | SMTP auth username |
+| `SMTP_PASS` | No | SMTP auth password |
+| `SMTP_FROM` | No | Sender email for lead notifications |
+| `NOTIFY_EMAIL` | No | Inbox that receives lead notifications |
+
+> If SMTP values are not provided, the backend auto-generates an Ethereal test mailbox in development.
+
+### Frontend (`frontend/.env`)
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `VITE_API_URL` | No | Base URL for API requests. Use `http://localhost:5000` for local split dev. |
 
 ---
 
