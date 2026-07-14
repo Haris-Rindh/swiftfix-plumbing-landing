@@ -25,8 +25,18 @@ export default function Login({ setToken }) {
       });
 
       const data = await response.json();
+      const hasValidResponseShape = data && typeof data === 'object' && typeof data.success === 'boolean';
+
+      if (!hasValidResponseShape) {
+        setErrorMsg('Unexpected response from server. Please try again.');
+        return;
+      }
 
       if (data.success) {
+        if (typeof data.token !== 'string' || !data.token.trim()) {
+          setErrorMsg('Login failed: missing auth token in server response.');
+          return;
+        }
         localStorage.setItem('swiftfix_token', data.token);
         setToken(data.token);
         navigate('/admin');

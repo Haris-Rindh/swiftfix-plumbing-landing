@@ -71,7 +71,7 @@ export default function AdminDashboard({ token, onLogout }) {
       const data = await response.json();
       if (data.success) {
         // Update local state
-        setLeads(leads.map(lead => lead._id === leadId ? { ...lead, status: newStatus } : lead));
+        setLeads((prevLeads) => prevLeads.map(lead => lead._id === leadId ? { ...lead, status: newStatus } : lead));
       } else {
         alert('Failed to update status: ' + data.error);
       }
@@ -101,7 +101,7 @@ export default function AdminDashboard({ token, onLogout }) {
       const data = await response.json();
       if (data.success) {
         // Update local state
-        setLeads(leads.filter(lead => lead._id !== leadId));
+        setLeads((prevLeads) => prevLeads.filter(lead => lead._id !== leadId));
       } else {
         alert('Failed to delete lead: ' + data.error);
       }

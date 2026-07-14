@@ -13,8 +13,12 @@ const protect = async (req, res, next) => {
       // Extract token (Bearer <token>)
       token = req.headers.authorization.split(' ')[1];
 
+      if (!process.env.JWT_SECRET) {
+        return res.status(500).json({ success: false, error: 'Server misconfiguration: JWT secret is missing' });
+      }
+
       // Decode/Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_jwt_secret');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       // Fetch user from DB, attach to request (excluding password)
       req.user = await User.findById(decoded.id).select('-password');

@@ -4,6 +4,18 @@ let transporter;
 let isEthereal = false;
 let etherealUser = '';
 
+const escapeHtml = (value = '') =>
+  String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const sanitizeHeaderValue = (value = '') => String(value).replace(/[\r\n]+/g, ' ').trim();
+
+const sanitizePhoneForTel = (value = '') => String(value).replace(/[^\d+]/g, '');
+
 // Create transporter configuration
 const initTransporter = async () => {
   if (transporter) return transporter;
@@ -65,6 +77,13 @@ const sendLeadNotification = async (lead) => {
       heater: 'Water Heater',
       install: 'Installation Quote'
     };
+    const safeName = escapeHtml(lead.name);
+    const safePhone = escapeHtml(lead.phone);
+    const safeIssue = escapeHtml(issueLabels[lead.issue] || lead.issue);
+    const safeDetails = lead.details ? escapeHtml(lead.details).replace(/\n/g, '<br />') : '';
+    const safePhoneForTel = sanitizePhoneForTel(lead.phone);
+    const subjectName = sanitizeHeaderValue(lead.name);
+    const subjectIssue = sanitizeHeaderValue(issueLabels[lead.issue] || lead.issue);
 
     // Calculate estimate html row
     const estimateHtml = lead.estimateMax > 0 
@@ -77,14 +96,14 @@ const sendLeadNotification = async (lead) => {
     const detailsHtml = lead.details 
       ? `<tr>
           <td style="padding: 10px; font-weight: bold; color: #374151; vertical-align: top;">Leads Details:</td>
-          <td style="padding: 10px; color: #4b5563; font-style: italic; line-height: 1.4;">${lead.details.replace(/\n/g, '<br />')}</td>
+          <td style="padding: 10px; color: #4b5563; font-style: italic; line-height: 1.4;">${safeDetails}</td>
          </tr>`
       : '';
 
     const mailOptions = {
       from: `"SwiftFix Plumbing Alerts" <${sender}>`,
       to: recipient,
-      subject: `New Lead Inquiry: ${lead.name} (${issueLabels[lead.issue] || lead.issue})`,
+      subject: `New Lead Inquiry: ${subjectName} (${subjectIssue})`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px; background-color: #fcfcfc;">
           <h2 style="color: #0ea5e9; border-bottom: 2px solid #0ea5e9; padding-bottom: 10px; margin-top: 0;">New Service Inquiry</h2>
@@ -93,17 +112,17 @@ const sendLeadNotification = async (lead) => {
           <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
             <tr style="background-color: #f3f4f6;">
               <td style="padding: 10px; font-weight: bold; width: 130px; color: #374151;">Name:</td>
-              <td style="padding: 10px; color: #111827;">${lead.name}</td>
+              <td style="padding: 10px; color: #111827;">${safeName}</td>
             </tr>
             <tr>
               <td style="padding: 10px; font-weight: bold; color: #374151;">Phone Number:</td>
               <td style="padding: 10px; color: #111827;">
-                <a href="tel:${lead.phone}" style="color: #0284c7; text-decoration: none; font-weight: bold;">${lead.phone}</a>
+                <a href="tel:${safePhoneForTel}" style="color: #0284c7; text-decoration: none; font-weight: bold;">${safePhone}</a>
               </td>
             </tr>
             <tr style="background-color: #f3f4f6;">
               <td style="padding: 10px; font-weight: bold; color: #374151;">Service Issue:</td>
-              <td style="padding: 10px; color: #111827; font-weight: bold;">${issueLabels[lead.issue] || lead.issue}</td>
+              <td style="padding: 10px; color: #111827; font-weight: bold;">${safeIssue}</td>
             </tr>
             ${estimateHtml}
             ${detailsHtml}
