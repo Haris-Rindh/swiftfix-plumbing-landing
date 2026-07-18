@@ -82,20 +82,41 @@ export default function EstimateWizard({ onSuccess }) {
     setIsLoading(true);
     setErrorMsg('');
 
+    const selectedCategory = pricingData[category];
+    if (!selectedCategory || step !== 3) {
+      setErrorMsg('Please complete the estimate steps before submitting.');
+      setIsLoading(false);
+      return;
+    }
+
+    const name = formData.name.trim();
+    const phone = formData.phone.trim();
+    if (!name || !phone) {
+      setErrorMsg('Please enter your name and phone number.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (phone.replace(/\D/g, '').length < 7) {
+      setErrorMsg('Please enter a valid phone number.');
+      setIsLoading(false);
+      return;
+    }
+
     const optDetails = getActiveOptionDetails();
-    if (!optDetails) {
+    if (!optDetails || typeof optDetails.min !== 'number' || typeof optDetails.max !== 'number' || optDetails.min > optDetails.max) {
       setErrorMsg('Pricing error. Please restart the wizard.');
       setIsLoading(false);
       return;
     }
 
     const payload = {
-      name: formData.name,
-      phone: formData.phone,
+      name,
+      phone,
       issue: category,
       estimateMin: optDetails.min,
       estimateMax: optDetails.max,
-      details: `Selected Issue: ${pricingData[category].label} -> Option: ${optDetails.label}`
+      details: `Selected Issue: ${selectedCategory.label} -> Option: ${optDetails.label}`
     };
 
     const API_URL = import.meta.env.VITE_API_URL || '';

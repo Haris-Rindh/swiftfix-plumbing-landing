@@ -11,6 +11,11 @@ const { sendLeadNotification } = require('./config/email');
 // Load environment variables
 dotenv.config();
 
+if (!process.env.JWT_SECRET) {
+  console.error('[Startup Error] Missing required JWT_SECRET environment variable.');
+  process.exit(1);
+}
+
 // Connect to Database
 connectDB().then(() => {
   // Seed Default Admin User
@@ -74,7 +79,7 @@ app.post('/api/auth/login', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { id: user._id },
-      process.env.JWT_SECRET || 'fallback_jwt_secret',
+      process.env.JWT_SECRET,
       { expiresIn: '30d' }
     );
 
